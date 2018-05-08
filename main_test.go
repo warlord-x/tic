@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+
 func TestCheckRowColumnDiagWin(t *testing.T) {
 
 	cases := []struct {
@@ -118,13 +119,31 @@ func TestCheckRowColumnDiagWin(t *testing.T) {
 			expectedResultColumn:0,
 			expectedResultDiag:1,
 		},
+		{
+			description:       "should return opponent win with 2 opponents for row",
+			board:             [][]string{{"x", "x", "o"}, {"z", "z", "z"}, {"o", "o", "x"}},
+			expectedResultRow: -1,
+			expectedResultColumn:0,
+			expectedResultDiag:0,
+		},
+		{
+			description:       "should return opponent win with 2 opponents for col",
+			board:             [][]string{	{"z", "x", "o"},
+											{"z", "o", "x"},
+											{"z", "o", "x"}},
+			expectedResultRow: 0,
+			expectedResultColumn:-1,
+			expectedResultDiag:0,
+		},
 
 
 
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
+			opponent1Sign="o"
+			opponent2Sign="z"
 			resultRow := checkRow(c.board)
 			resultColumn:=checkColumn(c.board)
 			resultDiag:=checkDiag(c.board)
@@ -188,7 +207,7 @@ func TestWeightMove(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
 			resultWeight := weightMove(c.board)
 
 
@@ -233,7 +252,7 @@ func TestIsRemaining(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
 			isRemaining := isRemaining(c.board)
 
 
@@ -264,7 +283,7 @@ func TestMinMax(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
 			max := Max(c.a,c.b)
 			min := Min(c.a,c.b)
 
@@ -274,6 +293,39 @@ func TestMinMax(t *testing.T) {
 			}
 			if c.min != min {
 				t.Errorf("\nUnexpected min: \n\t\t expected: %d, \n\t\t actual: %d", c.min, min)
+			}
+		})
+	}
+}
+
+func TestReadArgs(t *testing.T) {
+
+	cases := []struct {
+		description       string
+		boardSize         int
+		expectedBoardSize int
+		player1Sign       string
+		player2Sign       string
+		computerSign      string
+
+	}{
+		{
+			description:       "Should return given size as board size without error",
+			expectedBoardSize:5,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+
+			readArgs("test_config.txt")
+
+
+
+			if c.boardSize != boardSize {
+				t.Errorf("\nUnexpected board size: \n\t\t expected: %d, \n\t\t actual: %d", c.boardSize, boardSize)
+			}
+			if c.computerSign != computerSign || c.player1Sign != opponent1Sign || c.player2Sign != opponent2Sign {
+				t.Errorf("\nUnexpected board signs: \n\t\t expected: %d, \n\t\t actual: %d \n\t\t expected: %d, \n\t\t actual: %d \n\t\t expected: %d, \n\t\t actual: %d", c.computerSign, computerSign, c.player1Sign, opponent1Sign, c.player2Sign, opponent2Sign)
 			}
 		})
 	}
@@ -398,9 +450,9 @@ func TestFinder(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
 			opponent1Sign="o"
-			result:=finder(c.board,c.isMyTurn)
+			result:=finder(c.board,c.isMyTurn,2)
 
 			if c.expectedResult != result {
 				t.Errorf("\nUnexpected win: \n\t\t expected: %d, \n\t\t actual: %d", c.expectedResult, result)
@@ -416,36 +468,51 @@ func TestPlay(t *testing.T) {
 		expectedRow int
 		expectedCol	int
 	}{
-		/*{
-			description:       "should return my win for the given board",
+		{
+			description:       "should return the winning move for computer",
 			board:             [][]string{	{"x", "x", "o"},
 											{"o", "_", "_"},
 											{"o", "x", "_"}},
 
 			expectedRow:1,
 			expectedCol:1,
-		},*/
+		},
+		{
+			description:       "should return the winning move for computer",
+			board:             [][]string{	{"x", "x", "_"},
+											{"o", "o", "_"},
+											{"o", "x", "_"}},
+
+			expectedRow:0,
+			expectedCol:2,
+		},
+		{
+			description:       "should return the move not letting opponent win",
+			board:             [][]string{	{"x", "_", "_"},
+											{"o", "o", "_"},
+											{"_", "_", "x"}},
+
+			expectedRow:1,
+			expectedCol:2,
+		},
 		{
 			description:       "should return a move for the given board",
-			/*board:             [][]string{	{"_", "_", "_", "_"},
-											{"_", "o", "_", "_"},
-											{"_", "_", "_", "_"},
-											{"_", "_", "_", "_"}},*/
 			board:             [][]string{	{"_", "_","_"},
 											{"_", "o","_"},
 											{"_", "_","_"}},
 
-			expectedRow:1,
-			expectedCol:1,
+			expectedRow:0,
+			expectedCol:0,
 		},
 
 	}
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			mySign="x"
+			computerSign ="x"
 			opponent1Sign="o"
 			expectedRow, expectedCol:=play(c.board)
 
+			printBoard(c.board)
 			if c.expectedCol != expectedCol {
 				t.Errorf("\nUnexpected column: \n\t\t expected: %d, \n\t\t actual: %d", c.expectedCol, expectedCol)
 			}

@@ -1,0 +1,4 @@
+Board Size:10
+Player 1 Char:a
+Player 2 Char:b
+Computer Char:c

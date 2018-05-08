@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io/ioutil"
 )
 
 type Ball struct {
@@ -18,30 +19,47 @@ type BoardSpecs struct {
 	column int
 }
 
-var mySign string
+var computerSign string
 var opponent1Sign string
+var opponent2Sign string
+
+var boardSize int
 
 func main() {
 
-	mySign = "x"
-	opponent1Sign = "o"
-	board := createDummyBoard()
+
+	boardSize=readArgs("config.txt")
+	board :=initailizeBoard(boardSize,boardSize)
+
+	/*computerSign = "a"
+	opponent1Sign = "b"
+	opponent2Sign = "c"*/
+
 	printBoard(board)
-	notDone:=true
+	notDone := true
 	for isRemaining(board) && notDone {
-		readAndMarkMove(board)
+		fmt.Println("ready player 1..")
+		readAndMarkMove(board, opponent1Sign)
 		fmt.Println("Your move")
 		printBoard(board)
 		if isRemaining(board) {
+
+			if notDone {
+
+				fmt.Println("ready player 2..")
+				readAndMarkMove(board, opponent2Sign)
+				fmt.Println("player 2's  move")
+				printBoard(board)
+			}
 			fmt.Println("My move")
-			row,col := play(board)
-			board[row][col]=mySign
+			row, col := play(board)
+			board[row][col] = computerSign
 			printBoard(board)
 		}
-		s:=weightMove(board)
-		fmt.Println("score::::::::::",s)
-		if s==1 || s==-1 {
-			notDone=false
+		s := weightMove(board)
+		fmt.Println("score::::::::::", s)
+		if s == 1 || s == -1 {
+			notDone = false
 		}
 	}
 
@@ -49,10 +67,9 @@ func main() {
 
 func readPrint(b [][]string) [2]int {
 
-	input:=[2]int{-1,-1}
+	input := [2]int{-1, -1}
 
-
-	for input[0]==-1 || input[1]==-1 {
+	for input[0] == -1 || input[1] == -1 {
 		reader := bufio.NewReader(os.Stdin)
 		var storageString string
 		storageString, _ = reader.ReadString('\n')
@@ -61,37 +78,114 @@ func readPrint(b [][]string) [2]int {
 
 		if len(test) > 2 {
 			fmt.Println("incorrect input..try")
-			input[0]=-1
-			input[1]=-1
+			input[0] = -1
+			input[1] = -1
 			continue
 		}
 		for a := range test {
 			val := strings.TrimSpace(test[a])
 			convtered, err := strconv.Atoi(val)
-			if err == nil {
+			if err == nil && convtered < boardSize && convtered >= 0  {
 				fmt.Printf("%d looks like a number.\n", convtered)
-				input[a]=convtered
-				fmt.Println("lentth of input", len(input))
+				input[a] = convtered
+				//fmt.Println("lentth of input", len(input))
 			} else {
 				fmt.Println("incorrect input try again")
-				input[0]=-1
-				input[1]=-1
+				input[0] = -1
+				input[1] = -1
 				break
 			}
 		}
-		if !(input[0]==-1 && input[1]==-1) {
-			if b[input[0]][input[1]]!="_" {
+		if !(input[0] == -1 && input[1] == -1) {
+			if b[input[0]][input[1]] != "_" {
 				fmt.Println("incorrect input , value already exist")
-				input[0]=-1
-				input[1]=-1
+				input[0] = -1
+				input[1] = -1
 			}
 		}
 
 	}
 	return input
 }
+func readArgs(filename string) int {
 
-func readAndMarkMove(b [][]string) {
+	b, err := ioutil.ReadFile(filename) // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	s := string(b)
+	lines := strings.Split(s, "\n")
+
+	//fmt.Println(b)
+
+	for a := range lines {
+		if strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[0]) == "Board Size" {
+			boardSpec := strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[1])
+			boardSpec = strings.TrimSpace(boardSpec)
+			readSize, err := strconv.Atoi(strings.TrimSpace(boardSpec))
+			if err != nil || readSize < 3 || readSize > 10 {
+
+				fmt.Println("incorrect input config file")
+				os.Exit(1)
+			}else{
+				boardSize=readSize
+			}
+
+		}
+		if strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[0]) == "Player 1 Char" {
+			boardSpec := strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[1])
+			opponent1Sign = strings.TrimSpace(boardSpec)
+
+		}
+		if strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[0]) == "Player 2 Char" {
+			boardSpec := strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[1])
+			opponent2Sign = strings.TrimSpace(boardSpec)
+
+		}
+		if strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[0]) == "Computer Char" {
+			boardSpec := strings.TrimSpace(strings.Split(strings.TrimSpace(lines[a]), ":")[1])
+			computerSign = strings.TrimSpace(boardSpec)
+
+		}
+	}
+
+	if boardSize == -1 {
+		os.Exit(1)
+	}
+
+	fmt.Printf("board size : %d , computer char %s , player1 char %s , player 2 char %s",boardSize, computerSign,opponent1Sign,opponent2Sign)
+fmt.Println()
+	fmt.Println("Let the game begin !!")
+
+	return boardSize
+
+		/*boardSize := -1
+		for boardSize == -1 {
+			fmt.Println("Provide size of the playground and press enter")
+
+			reader := bufio.NewReader(os.Stdin)
+			plagroundSize, _ := reader.ReadString('\n')
+
+
+			readSize, err := strconv.Atoi(strings.TrimSpace(plagroundSize))
+			if err != nil || readSize < 3 || readSize >10 {
+
+				fmt.Println("incorrect input try again")
+				boardSize = -1
+				continue
+			}
+			boardSize=readSize
+			fmt.Println(boardSize)
+
+		}*/
+
+
+
+	//fmt.Println(boardSize)
+
+}
+
+func readAndMarkMove(b [][]string, opponentSign string) {
 	/*row := -1
 	col := -1
 	_, err := fmt.Scanf("%d", &row)
@@ -101,9 +195,9 @@ func readAndMarkMove(b [][]string) {
 	fmt.Scanf("%d", &col)*/
 
 	//if b[row][col] != "_"
-	input:=readPrint(b)
+	input := readPrint(b)
 
-	b[input[0]][input[1]] = "o"
+	b[input[0]][input[1]] = opponentSign
 
 }
 func player(action string, table chan *Ball) {
@@ -116,12 +210,18 @@ func player(action string, table chan *Ball) {
 	}
 }
 
-func initailize(r, c int, mysign string, oppo1sign string) {
+func initailizeBoard(r, c int) [][]string {
 
-	mySign = mysign
-	opponent1Sign = oppo1sign
+	board := make([][]string, 0)
+	for i := 0; i < r; i++ {
+		row := make([]string, 0)
+		for j := 0; j < c; j++ {
+			row = append(row, "_")
+		}
+		board = append(board,row)
+	}
 
-	row := make([]string, 0)
+	/*row := make([]string, 0)
 	for i := 0; i < r; i++ {
 		row = append(row, "_")
 	}
@@ -130,9 +230,9 @@ func initailize(r, c int, mysign string, oppo1sign string) {
 
 	for j := 0; j < c; j++ {
 		col = append(col, row)
-	}
+	}*/
 
-	printBoard(col)
+	return board
 }
 
 func printBoard(b [][]string) {
@@ -151,9 +251,9 @@ func createDummyBoard() [][]string {
 	//Reverse Diag
 	//a := [][]string{{"o", "x", "x", "o"}, {"x", "x", "o", "x"}, {"o", "o", "o", "x"}, {"o", "x", "x", "o"}}
 	//Dummy Empty
-	//a := [][]string{{"_", "_", "_"}, {"_", "_", "_"}, {"_", "_", "_"}}
+	a := [][]string{{"_", "_", "_"}, {"_", "_", "_"}, {"_", "_", "_"}}
 	//Dummy Empty 4
-	a := [][]string{{"_", "_", "_","_"}, {"_","_", "_", "_"}, {"_","_", "_", "_"},{"_","_", "_", "_"}}
+	//a := [][]string{{"_", "_", "_","_"}, {"_","_", "_", "_"}, {"_","_", "_", "_"},{"_","_", "_", "_"}}
 
 	return a
 
@@ -201,9 +301,9 @@ func checkRow(b [][]string) int {
 
 		if notMatched {
 
-			if b[row][i] == "x" {
+			if b[row][i] == computerSign {
 				return 1
-			} else if b[row][i] == "o" {
+			} else if b[row][i] == opponent1Sign || b[row][i] == opponent2Sign {
 				return -1
 			}
 		}
@@ -229,9 +329,9 @@ func checkColumn(b [][]string) int {
 		}
 
 		if notMatched {
-			if b[i][column] == "x" {
+			if b[i][column] == computerSign {
 				return 1
-			} else if b[i][column] == "o" {
+			} else if b[i][column] == opponent1Sign || b[i][column] == opponent2Sign {
 				return -1
 			}
 		}
@@ -256,9 +356,9 @@ func checkDiag(b [][]string) int {
 
 	}
 	if notMatched {
-		if b[i][i] == "x" {
+		if b[i][i] == computerSign {
 			return 1
-		} else if b[i][i] == "o" {
+		} else if b[i][i] == opponent1Sign || b[i][i] == opponent2Sign {
 			return -1
 		}
 	}
@@ -277,9 +377,9 @@ func checkDiag(b [][]string) int {
 			j--
 		}
 		if notMatched {
-			if b[j][i] == "x" {
+			if b[j][i] == computerSign {
 				return 1
-			} else if b[j][i] == "o" {
+			} else if b[j][i] == opponent1Sign || b[j][i] == opponent2Sign {
 				return -1
 			}
 		}
@@ -298,9 +398,9 @@ func play(b [][]string) (int, int) {
 	for row := range b {
 		for column := range b[0] {
 			if b[row][column] == "_" {
-				b[row][column] = mySign
+				b[row][column] = computerSign
 				//printBoard(b)
-				val := finder(b, false,1)
+				val := finder(b, false, 1)
 				b[row][column] = "_"
 				if val > highVal {
 					highVal = val
@@ -310,14 +410,14 @@ func play(b [][]string) (int, int) {
 			}
 		}
 	}
-fmt.Println("printing before exiting play",rowX,columnX)
+	fmt.Println("printing before exiting play", rowX, columnX)
 	printBoard(b)
-	//b[rowX][columnX] = mySign
+	//b[rowX][columnX] = computerSign
 	return rowX, columnX
 
 }
 
-func finder(b [][]string, isMe bool,recursionLevel int) int {
+func finder(b [][]string, isMe bool, recursionLevel int) int {
 	score := weightMove(b)
 
 	if score == 1 || score == -1 || recursionLevel == 0 {
@@ -334,9 +434,9 @@ func finder(b [][]string, isMe bool,recursionLevel int) int {
 		for row := range b {
 			for column := range b[0] {
 				if b[row][column] == "_" {
-					b[row][column] = mySign
+					b[row][column] = computerSign
 					//printBoard(b)
-					best = Max(finder(b, !isMe,recursionLevel-1), best)
+					best = Max(finder(b, !isMe, recursionLevel-1), best)
 					b[row][column] = "_"
 				}
 			}
@@ -349,11 +449,28 @@ func finder(b [][]string, isMe bool,recursionLevel int) int {
 				if b[row][column] == "_" {
 					b[row][column] = opponent1Sign //TODO : other signs
 					//printBoard(b)
-					best = Min(finder(b, !isMe,recursionLevel-1), best)
+					best = Min(finder(b, !isMe, recursionLevel-1), best)
 					b[row][column] = "_"
 				}
 			}
 		}
+
+		///////////////////////
+
+		//again for another opponent
+
+		for row := range b {
+			for column := range b[0] {
+				if b[row][column] == "_" {
+					b[row][column] = opponent2Sign //TODO : other signs
+					//printBoard(b)
+					best = Min(finder(b, !isMe, recursionLevel-1), best)
+					b[row][column] = "_"
+				}
+			}
+		}
+
+		///////////////////
 		return best
 	}
 }
