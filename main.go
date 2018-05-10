@@ -252,20 +252,12 @@ func finder(b [][]string, isMe bool, recursionLevel int) int {
 					b[row][column] = opponent1Sign
 					best = Min(finder(b, !isMe, recursionLevel-1), best)
 					b[row][column] = "_"
-				}
-			}
-		}
-
-		for row := range b {
-			for column := range b[0] {
-				if b[row][column] == "_" {
 					b[row][column] = opponent2Sign
 					best = Min(finder(b, !isMe, recursionLevel-1), best)
 					b[row][column] = "_"
 				}
 			}
 		}
-
 		return best
 	}
 }
@@ -333,6 +325,8 @@ func checkColumn(b [][]string) int {
 	}
 	return result
 }
+
+
 
 func checkDiag(b [][]string) int {
 	result := 0
